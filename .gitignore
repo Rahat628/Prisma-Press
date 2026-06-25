@@ -1,0 +1,5 @@
+node_modules
+dist
+.env
+Prisma Press Backend Requirement Analysis.pdf
+/generated/prisma
