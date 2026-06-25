@@ -2,6 +2,7 @@ model User {
     Id    String @id @default(uuid())
     email String @unique
     name  String @db.VarChar(255)
+    password String
     profile Profile? 
     role Role @default(USER)
     activeStatus ActiveStatus @default(ACTIVE)
