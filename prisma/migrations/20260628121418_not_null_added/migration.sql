@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Post" ALTER COLUMN "views" DROP NOT NULL,
+ALTER COLUMN "tags" DROP NOT NULL;

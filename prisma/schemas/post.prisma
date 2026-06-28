@@ -5,8 +5,8 @@ model Post{
     thumbnail String  @db.VarChar(255)
     isFeatured Boolean @default(false)
     status PostStatus @default(PUBLISHED)
-    views Int @default(0)
-    tags Json 
+    views Int? @default(0)
+    tags String[]  
     user User @relation(fields: [userId], references: [Id])
     userId String 
 }
