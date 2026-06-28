@@ -8,3 +8,8 @@ enum ActiveStatus {
     ACTIVE
     BLOCKED
 }
+
+enum PostStatus{
+    PUBLISHED
+    REJECTED
+}

@@ -28,8 +28,25 @@ const userLogin = catchAsync(async (req: Request, res: Response, next: NextFunct
     })
 })
 
+const generateToken =catchAsync((req:Request,res: Response, next:NextFunction)=>{
+    const {refreshToken} = req.cookies
+    const accessToken =  authService.newAccessToken(refreshToken)
+        res.cookie('accessToken', accessToken, {
+        httpOnly : true,
+        secure : false,
+        maxAge : 60 * 60 * 1000 // 1 hour
+    })
+        sendResponse(res,{
+        status : httpStatus.OK,
+        success : true,
+        message : "AccessToken Generated Successfully",
+        data : {accessToken}
+    })
 
+
+})
 
 export const authController = {
-    userLogin
+    userLogin,
+    generateToken
 };

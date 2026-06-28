@@ -14,28 +14,30 @@ const CreateUser = catchAsync(async (req: Request, res: Response, next: NextFunc
     })
 })
 
+const getUserProfile = catchAsync(async(req:Request, res: Response, next:NextFunction)=>{
+    const result = await UserService.getProfile(req.user!)
 
-// const CreateUser = async (req: Request, res: Response) => {
-//     try {
-//         const result = await UserService.CreateUser(req.body)
-//         res.status(httpStatus.CREATED).json({
-//             success: true,
-//             message: "User created successfully",
-//             data : result
-//         })
-        
-//     }
-//     catch (err: any) {
-//         res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-//             success: false,
-//             message : err.message,
-//             error : err
-//         })
+    sendResponse(res,{
+        status:httpStatus.ACCEPTED,
+        success:true,
+        message:"User Profile Fetched",
+        data:result
+    })
+})
 
-//     }
-
-// }
-
+const updateMyProfile = catchAsync(async(req:Request, res: Response, next:NextFunction)=>{
+    console.log(req.user?.id)
+    const result = await UserService.updateProfile(req.body,req.user?.email!)
+    console.log(result)
+    sendResponse(res,{
+        status:httpStatus.ACCEPTED,
+        success:true,
+        message:"User Profile Updated",
+        data:result
+    })
+})
 export const UserController = {
-    CreateUser
+    CreateUser,
+    getUserProfile,
+    updateMyProfile
 }

@@ -1,10 +1,21 @@
 import { prisma } from "../../lib/prisma";
 import config from "../../config";
 import bcrypt from "bcrypt";
-import type { IUser } from "./user.interface";
+import type { IRequestUser, IUser } from "./user.interface";
+import { error } from "console";
 
 
 
+const getProfile = async (payload: IRequestUser) => {
+
+    const { email } = payload
+    const result = await prisma.user.findUniqueOrThrow({
+        where: { email },
+        omit: { password: true },
+        include: { profile: true }
+    })
+    return result
+}
 
 
 const CreateUser = async (payload: IUser) => {
@@ -15,13 +26,13 @@ const CreateUser = async (payload: IUser) => {
             name,
             email,
             password: hashPassword,
-            profile:{
-                create : {
+            profile: {
+                create: {
                     profilePhoto
                 }
             }
         },
-        
+
         omit: {
             password: true
         }
@@ -31,20 +42,44 @@ const CreateUser = async (payload: IUser) => {
     }
 
     const createdUser = await prisma.user.findUnique({
-        where : {
-            Id : user.Id
+        where: {
+            Id: user.Id
         },
-        include : {
-            profile : true
+        include: {
+            profile: true
         }
     })
-    if(!createdUser){
+    if (!createdUser) {
         throw new Error("Created User not found")
     }
     return createdUser
-    
+
 }
 
+const updateProfile = async(payload: any, userEmail : string) => {
+    const {name,profilePhoto,bio} = payload
+
+    const result = await prisma.user.update({
+        where:{email:userEmail},
+        data:{
+            name:name,
+            profile:{
+                update:{
+                    ProfilePhoto:profilePhoto,
+                    bio:bio
+                }
+            }
+        },
+        omit:{password:true},
+        include:{profile:true}
+    })
+    return result
+
+}
+
+
 export const UserService = {
-    CreateUser
+    CreateUser,
+    getProfile,
+    updateProfile
 }

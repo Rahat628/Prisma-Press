@@ -1,57 +1,61 @@
 import { prisma } from "../../lib/prisma";
 import bcrypt from 'bcrypt'
-import jwt, { type JwtPayload, type SignOptions } from 'jsonwebtoken'
+import jwt, { type SignOptions } from 'jsonwebtoken'
 import config from "../../config";
-import type { NextFunction } from "express";
-import { type Request, type Response } from "express";
-import type { Role } from "../../../generated/prisma";
+import { jwtUtils } from '../../utils/jwt'
 
 
 
-const authUser = async( req: Request, next: NextFunction, requiredRoles : Role[] )=>{
-    const {accessToken} = req.cookies;
-    const decoded = jwt.verify(accessToken,config.jwtAccessSecret as string)
-    if(typeof decoded ==='string' ){
-        throw new Error("Invalid token")
-    }
-    if(!(decoded.Role in requiredRoles)){
-        throw new Error('Unauthorized')
-    }
-
-    console.log(decoded.id,decoded.name)
-
-    next()
-}
-
-
-const loginUser = async(payload : any)=>{
-    const { email , password } = payload;
+const loginUser = async (payload: any) => {
+    const { email, password } = payload;
     const user = await prisma.user.findUniqueOrThrow({
-        where: {email}
+        where: { email }
     })
     const isPasswordValid = await bcrypt.compare(password, user.password)
-    if(!isPasswordValid){
+    if (!isPasswordValid) {
         throw new Error("Invalid password")
+    }
+
+    if (user.activeStatus === 'BLOCKED') {
+        throw new Error("User is inactive")
     }
     // generate jwt tokens
 
     const jwtPayload = {
         id: user.Id,
-        name : user.name,
+        name: user.name,
         email: user.email,
-        role : user.role
-    } as JwtPayload
+        role: user.role
+    }
 
-    const accessToken = jwt.sign(jwtPayload, config.jwtAccessSecret as string,
-         {expiresIn : config.jwtAccessExpiresIn } as SignOptions)
-    const refreshToken = jwt.sign(jwtPayload, config.jwtRefreshSecret as string, 
-        {expiresIn : config.jwtRefreshExpiresIn } as SignOptions)
+    const accessToken = jwtUtils.jwtSign(jwtPayload, config.jwtAccessSecret as string, config.jwtAccessExpiresIn as SignOptions)
+
+    const refreshToken = jwtUtils.jwtSign(jwtPayload, config.jwtRefreshSecret as string, config.jwtRefreshExpiresIn as SignOptions)
+
     return {
         accessToken,
         refreshToken
     }
 
 }
+
+const newAccessToken = (refreshToken: string) => {
+    const decoded = jwtUtils.jwtVerify(refreshToken, config.jwtRefreshSecret as string)
+    if (typeof decoded === "string") {
+        throw new Error('Refresh-Token is Unverified')
+    }
+    const JwtPayload = {
+        id: decoded.Id,
+        name: decoded.name,
+        email: decoded.email,
+        role: decoded.role
+    }
+    const accessToken = jwt.sign(JwtPayload, config.jwtAccessSecret as string,
+        { expiresIn: config.jwtAccessExpiresIn } as SignOptions)
+    return accessToken
+}
+
 export const authService = {
-    loginUser
+    loginUser,
+    newAccessToken
 }
